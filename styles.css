@@ -1,8 +1,36 @@
-/*
+/* Markdown Annotations Plugin Styles */
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+/* Author list styling */
+.markdown-annotations-author {
+	margin-bottom: 0.5em;
+	padding: 0.5em;
+	border-radius: 4px;
+	background-color: var(--background-secondary);
+}
 
-If your plugin does not need CSS, delete this file.
+.markdown-annotations-author .setting-item {
+	border: none;
+	padding: 0;
+}
 
-*/
+/* Modal button container */
+.modal-button-container {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5em;
+	margin-top: 1em;
+	padding-top: 1em;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+.modal-button-container button {
+	padding: 0.5em 1em;
+	cursor: pointer;
+}
+
+/* Setting description for authors section */
+.setting-item-description {
+	color: var(--text-muted);
+	font-size: 0.9em;
+	margin-bottom: 1em;
+}

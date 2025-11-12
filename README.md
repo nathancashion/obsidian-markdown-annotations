@@ -35,7 +35,26 @@ The plugin supports three types of annotations:
 
 ## Usage
 
-TBD - Plugin features under development
+### Configure Authors
+
+1. Open Obsidian **Settings → Markdown Annotations**
+2. Select **Add Author** to create a new author profile
+3. Fill in:
+   - **Name**: The author's display name
+   - **Type**: Choose Human (@), AI (&), or Reference (*)
+   - **Identifier**: Optional (email, website, etc.)
+4. Authors can be edited or deleted from the settings panel
+
+### Commands
+
+- **Validate annotations in current file**: Check if hash validation passes
+- **Show annotation information**: Display annotation details in console
+
+### Coming Soon
+
+- Visual indicators for annotated text
+- Create annotations from selected text
+- Automatic hash recalculation
 
 ## Specification
 

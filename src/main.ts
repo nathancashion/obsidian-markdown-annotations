@@ -5,6 +5,7 @@
 import { Plugin, Notice } from 'obsidian';
 import { MarkdownAnnotationsSettings, DEFAULT_SETTINGS } from './settings';
 import { parseDocument } from './parser/parser';
+import { MarkdownAnnotationsSettingTab } from './ui/settings-tab';
 
 export default class MarkdownAnnotationsPlugin extends Plugin {
 	settings: MarkdownAnnotationsSettings;
@@ -14,6 +15,9 @@ export default class MarkdownAnnotationsPlugin extends Plugin {
 		
 		// Load settings
 		await this.loadSettings();
+		
+		// Add settings tab
+		this.addSettingTab(new MarkdownAnnotationsSettingTab(this.app, this));
 		
 		// Add command to validate annotations in current file
 		this.addCommand({

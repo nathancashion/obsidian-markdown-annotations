@@ -58,7 +58,17 @@ npm run dev
 
 Then symlink or copy to your vault's plugin directory.
 
-### 3. Try the Commands
+### 3. Configure Authors
+
+1. Go to **Settings → Markdown Annotations**
+2. Select **Add Author**
+3. Enter author details:
+   - **Name**: Display name (e.g., "John Doe")
+   - **Type**: Human (@), AI (&), or Reference (*)
+   - **Identifier**: Optional email, website, etc.
+4. Select **Save**
+
+### 4. Try the Commands
 
 Open the example.md file (or create your own annotated file) and:
 
@@ -75,6 +85,7 @@ Open the example.md file (or create your own annotated file) and:
 - **Author annotations**: Parse @Human, &AI, and *Reference annotations
 - **Character ranges**: Handle grapheme cluster-based ranges
 - **Basic commands**: Validate and display annotation info
+- **Settings tab**: Configure authors with name, type, and optional identifier
 
 ### 🚧 To Be Implemented
 
