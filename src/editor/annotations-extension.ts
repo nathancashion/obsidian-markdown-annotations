@@ -34,14 +34,16 @@ const annotationsField = StateField.define<ParsedDocument | null>({
 /**
  * Create the annotation highlighting extension
  */
-export function createAnnotationExtension() {
+export function createAnnotationExtension(plugin: any) {
 	return [
 		annotationsField,
 		ViewPlugin.fromClass(class {
+			plugin: any;
 			decorations: DecorationSet;
 			pending: boolean;
 
 			constructor(view: EditorView) {
+				this.plugin = plugin;
 				this.decorations = Decoration.none;
 				this.pending = false;
 				this.updateAnnotations(view);
@@ -81,7 +83,8 @@ export function createAnnotationExtension() {
 			buildDecorations(view: EditorView, parsed: ParsedDocument): DecorationSet {
 				const builder = new RangeSetBuilder<Decoration>();
 
-				if (!parsed.annotations) {
+				// Check if visual indicators are enabled
+				if (!this.plugin.settings.showVisualIndicators || !parsed.annotations) {
 					return builder.finish();
 				}
 

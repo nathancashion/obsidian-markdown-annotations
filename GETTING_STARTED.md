@@ -73,8 +73,11 @@ Then symlink or copy to your vault's plugin directory.
 Open the example.md file (or create your own annotated file) and:
 
 1. Open Command Palette (Cmd/Ctrl+P)
-2. Type "Validate annotations" - checks if hash is valid
-3. Type "Show annotation information" - displays annotation details in console
+2. Type "Toggle show authors" - instantly show/hide highlighting
+3. Type "Validate annotations" - checks if hash is valid
+4. Type "Show annotation information" - displays annotation details in console
+
+**Tip**: Bind "Toggle show authors" to a keyboard shortcut for quick access (Settings → Hotkeys)
 
 ## Current Features
 

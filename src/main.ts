@@ -20,10 +20,24 @@ export default class MarkdownAnnotationsPlugin extends Plugin {
 		// Add settings tab
 		this.addSettingTab(new MarkdownAnnotationsSettingTab(this.app, this));
 		
-		// Register editor extension for annotation highlighting
-		if (this.settings.showVisualIndicators) {
-			this.registerEditorExtension(createAnnotationExtension());
-		}
+		// Register editor extension for annotation highlighting (always register, it checks settings internally)
+		this.registerEditorExtension(createAnnotationExtension(this));
+		
+		// Add toggle command
+		this.addCommand({
+			id: 'toggle-show-authors',
+			name: 'Toggle show authors',
+			callback: async () => {
+				this.settings.showVisualIndicators = !this.settings.showVisualIndicators;
+				await this.saveSettings();
+				
+				const status = this.settings.showVisualIndicators ? 'shown' : 'hidden';
+				new Notice(`Authors ${status}`);
+				
+				// Update workspace to refresh all editors
+				this.app.workspace.updateOptions();
+			}
+		});
 		
 		// Add command to validate annotations in current file
 		this.addCommand({

@@ -51,6 +51,7 @@ The plugin supports three types of annotations:
 
 ### Commands
 
+- **Toggle show authors**: Quickly show/hide annotation highlighting (like iA Writer)
 - **Validate annotations in current file**: Check if hash validation passes
 - **Show annotation information**: Display annotation details in console
 

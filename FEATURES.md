@@ -85,6 +85,13 @@
 
 **Available commands**:
 
+**"Toggle show authors"**:
+- Instantly show/hide annotation highlighting
+- Matches iA Writer's "Show Authors"/"Hide Authors" functionality
+- Works immediately without reloading
+- Can be bound to keyboard shortcut
+- Displays status notice
+
 **"Validate annotations in current file"**:
 - Checks if annotation block exists
 - Validates SHA-256 hash against content
