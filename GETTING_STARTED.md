@@ -84,17 +84,20 @@ Open the example.md file (or create your own annotated file) and:
 - **Hash validation**: Verify SHA-256 hashes against content
 - **Author annotations**: Parse @Human, &AI, and *Reference annotations
 - **Character ranges**: Handle grapheme cluster-based ranges
+- **Visual highlighting**: Real-time color-coded display of annotations
+  - Human: Subtle green/blue gradient
+  - AI: Vibrant multi-color gradient with animation
+  - Reference: Dimmed gray with opacity
 - **Basic commands**: Validate and display annotation info
 - **Settings tab**: Configure authors with name, type, and optional identifier
 
 ### 🚧 To Be Implemented
 
-- **Visual indicators**: Highlight annotated text in editor
 - **Annotation editing**: UI for adding/updating annotations
 - **Hash recalculation**: Auto-update hashes when text changes
-- **Settings panel**: Configure default author, display options
 - **Annotation creation**: Commands to annotate selected text
-- **iA Writer sync**: Ensure full compatibility
+- **Hover tooltips**: Show author info on mouseover
+- **Annotation sidebar**: View all annotations in current file
 
 ## Next Steps
 

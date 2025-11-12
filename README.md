@@ -4,9 +4,13 @@ An Obsidian plugin for viewing, creating, and editing [Markdown Annotations](htt
 
 ## Features
 
+- **Visual Highlighting**: See annotated text with color-coded highlights inspired by iA Writer
+  - Human contributions: Subtle green/blue gradient
+  - AI-generated text: Colorful gradient (orange, red, violet, blue) with subtle animation
+  - Reference material: Dimmed gray appearance
 - **View Annotations**: Display authorship metadata embedded in your Markdown files
-- **Create Annotations**: Add annotations to track contributions from humans, AI, and reference materials
-- **Edit Annotations**: Update existing annotations with automatic hash recalculation
+- **Author Management**: Configure reusable author profiles in settings
+- **Validate Annotations**: Check hash integrity to ensure annotations are correctly positioned
 - **iA Writer Compatible**: Full compatibility with the Markdown Annotations specification
 
 ## Annotation Types
@@ -52,9 +56,10 @@ The plugin supports three types of annotations:
 
 ### Coming Soon
 
-- Visual indicators for annotated text
 - Create annotations from selected text
-- Automatic hash recalculation
+- Automatic hash recalculation when editing
+- Annotation info on hover
+- Export annotations report
 
 ## Specification
 

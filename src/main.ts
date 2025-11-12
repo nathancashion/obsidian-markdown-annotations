@@ -6,6 +6,7 @@ import { Plugin, Notice } from 'obsidian';
 import { MarkdownAnnotationsSettings, DEFAULT_SETTINGS } from './settings';
 import { parseDocument } from './parser/parser';
 import { MarkdownAnnotationsSettingTab } from './ui/settings-tab';
+import { createAnnotationExtension } from './editor/annotations-extension';
 
 export default class MarkdownAnnotationsPlugin extends Plugin {
 	settings: MarkdownAnnotationsSettings;
@@ -18,6 +19,11 @@ export default class MarkdownAnnotationsPlugin extends Plugin {
 		
 		// Add settings tab
 		this.addSettingTab(new MarkdownAnnotationsSettingTab(this.app, this));
+		
+		// Register editor extension for annotation highlighting
+		if (this.settings.showVisualIndicators) {
+			this.registerEditorExtension(createAnnotationExtension());
+		}
 		
 		// Add command to validate annotations in current file
 		this.addCommand({
