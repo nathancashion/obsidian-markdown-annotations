@@ -1,6 +1,6 @@
 # Obsidian Markdown Annotations Plugin
 
-An Obsidian plugin for viewing, creating, and editing [Markdown Annotations](https://github.com/nately/Markdown-Annotations) - a format for embedding authorship metadata in Markdown files. Compatible with iA Writer.
+An Obsidian plugin for viewing, creating, and editing [Markdown Annotations](https://github.com/iainc/Markdown-Annotations/) - a format for embedding authorship metadata in Markdown files. Compatible with [iA Writer](https://ia.net/writer).
 
 ## Features
 
