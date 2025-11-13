@@ -64,7 +64,7 @@ The plugin supports three types of annotations:
 
 ## Specification
 
-This plugin implements the [Markdown Annotations specification](https://github.com/nately/Markdown-Annotations), which defines a standard format for embedding authorship metadata while preserving readability and portability.
+This plugin implements the [Markdown Annotations specification from iA, Inc.](https://github.com/iainc/Markdown-Annotations/), which defines a standard format for embedding authorship metadata while preserving readability and portability.
 
 ## Development
 
