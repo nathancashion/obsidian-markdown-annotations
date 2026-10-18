@@ -61,7 +61,7 @@ Then symlink or copy to your vault's plugin directory.
 ### 3. Configure Authors
 
 1. Go to **Settings → Markdown Annotations**
-2. Select **Add Author**
+2. Select **+** in the Authors header
 3. Enter author details:
    - **Name**: Display name (e.g., "John Doe")
    - **Type**: Human (@), AI (&), or Reference (*)
@@ -89,7 +89,7 @@ Open the example.md file (or create your own annotated file) and:
 - **Character ranges**: Handle grapheme cluster-based ranges
 - **Visual highlighting**: Real-time color-coded display of annotations
   - Human: Subtle green/blue gradient
-  - AI: Vibrant multi-color gradient with animation
+  - AI: Soft violet → pink → sky gradient wash
   - Reference: Dimmed gray with opacity
 - **Basic commands**: Validate and display annotation info
 - **Settings tab**: Configure authors with name, type, and optional identifier

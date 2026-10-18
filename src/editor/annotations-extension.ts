@@ -3,146 +3,105 @@
  */
 
 import { EditorView, Decoration, DecorationSet, ViewPlugin, ViewUpdate } from '@codemirror/view';
-import { StateField, StateEffect } from '@codemirror/state';
-import { RangeSetBuilder } from '@codemirror/state';
+import type { Range } from '@codemirror/state';
 import { parseDocument } from '../parser/parser';
-import { AuthorAnnotation, AuthorType, ParsedDocument } from '../types';
-import { splitGraphemes } from '../utils/grapheme';
+import { AuthorType } from '../types';
+import type MarkdownAnnotationsPlugin from '../main';
+import { AuthorshipState, authorshipField, authorshipWrite, loadParsed, writeAuthorship } from './authorship-state';
 
-/**
- * State effect to update annotations
- */
-const setAnnotationsEffect = StateEffect.define<ParsedDocument>();
+const DECORATIONS: Record<AuthorType, Decoration> = {
+	[AuthorType.Human]: Decoration.mark({ class: 'md-annotation-human' }),
+	[AuthorType.AI]: Decoration.mark({ class: 'md-annotation-ai' }),
+	[AuthorType.Reference]: Decoration.mark({ class: 'md-annotation-reference' }),
+};
 
-/**
- * State field to store parsed annotations
- */
-const annotationsField = StateField.define<ParsedDocument | null>({
-	create() {
-		return null;
-	},
-	update(value, tr) {
-		for (const effect of tr.effects) {
-			if (effect.is(setAnnotationsEffect)) {
-				return effect.value;
-			}
-		}
-		return value;
-	}
-});
+/** How long typing must pause before the annotation block is rewritten to match. */
+const UPKEEP_DELAY_MS = 1000;
 
 /**
  * Create the annotation highlighting extension
  */
-export function createAnnotationExtension(plugin: any) {
+export function createAnnotationExtension(plugin: MarkdownAnnotationsPlugin) {
 	return [
-		annotationsField,
+		authorshipField,
 		ViewPlugin.fromClass(class {
-			plugin: any;
 			decorations: DecorationSet;
-			pending: boolean;
+			private parsing = false;
+			private stale = false;
+			private destroyed = false;
+			private upkeepTimer: number | null = null;
 
-			constructor(view: EditorView) {
-				this.plugin = plugin;
-				this.decorations = Decoration.none;
-				this.pending = false;
-				this.updateAnnotations(view);
+			constructor(private view: EditorView) {
+				this.decorations = this.buildDecorations(view.state.field(authorshipField));
+				void this.updateAnnotations();
 			}
 
 			update(update: ViewUpdate) {
-				if (update.docChanged) {
-					this.updateAnnotations(update.view);
+				const authorship = update.state.field(authorshipField);
+				// `workspace.updateOptions()` reconfigures the editor after a settings change
+				const reconfigured = update.transactions.some(tr => tr.reconfigured);
+
+				if (authorship !== update.startState.field(authorshipField) || reconfigured) {
+					this.decorations = this.buildDecorations(authorship);
 				}
-				
-				// Update decorations when annotations state changes
-				const annotations = update.state.field(annotationsField);
-				if (annotations) {
-					this.decorations = this.buildDecorations(update.view, annotations);
+
+				if (update.docChanged) {
+					void this.updateAnnotations();
+					const typed = update.transactions.some(tr => tr.docChanged && !tr.annotation(authorshipWrite));
+					if (typed) this.scheduleUpkeep();
 				}
 			}
 
-			async updateAnnotations(view: EditorView) {
-				if (this.pending) return;
-				this.pending = true;
+			destroy() {
+				this.destroyed = true;
+				if (this.upkeepTimer !== null) window.clearTimeout(this.upkeepTimer);
+			}
+
+			async updateAnnotations() {
+				// Parsing is async (hashing), so coalesce edits that arrive mid-parse
+				// into one more pass rather than dropping them.
+				if (this.parsing) {
+					this.stale = true;
+					return;
+				}
+				this.parsing = true;
 
 				try {
-					const content = view.state.doc.toString();
-					const parsed = await parseDocument(content);
-					
-					// Dispatch effect to update annotations state
-					view.dispatch({
-						effects: setAnnotationsEffect.of(parsed)
-					});
+					do {
+						this.stale = false;
+						const parsed = await parseDocument(this.view.state.doc.toString());
+						if (this.destroyed) return;
+						if (!this.stale) {
+							this.view.dispatch({ effects: loadParsed.of(parsed) });
+						}
+					} while (this.stale);
 				} catch (error) {
 					console.error('Error parsing annotations:', error);
 				} finally {
-					this.pending = false;
+					this.parsing = false;
 				}
 			}
 
-			buildDecorations(view: EditorView, parsed: ParsedDocument): DecorationSet {
-				const builder = new RangeSetBuilder<Decoration>();
-
-				// Check if visual indicators are enabled
-				if (!this.plugin.settings.showVisualIndicators || !parsed.annotations) {
-					return builder.finish();
-				}
-
-				// Convert text to grapheme array for accurate positioning
-				const graphemes = splitGraphemes(parsed.text);
-				
-				// Process each author annotation
-				for (const annotation of parsed.annotations.authorAnnotations) {
-					this.addAnnotationDecorations(annotation, graphemes, builder);
-				}
-
-				return builder.finish();
+			/**
+			 * After edits, rewrite the block so its ranges and hash match the text again.
+			 * Only for notes that already have a block whose ranges we trust.
+			 */
+			scheduleUpkeep() {
+				if (this.upkeepTimer !== null) window.clearTimeout(this.upkeepTimer);
+				this.upkeepTimer = window.setTimeout(() => {
+					this.upkeepTimer = null;
+					if (this.destroyed) return;
+					const { spans, other, blockText, trusted } = this.view.state.field(authorshipField);
+					if (blockText === null || !trusted) return;
+					void writeAuthorship(this.view, spans, other, { addToHistory: false, expectBlockText: blockText });
+				}, UPKEEP_DELAY_MS);
 			}
 
-			addAnnotationDecorations(
-				annotation: AuthorAnnotation,
-				graphemes: string[],
-				builder: RangeSetBuilder<Decoration>
-			) {
-				for (const range of annotation.ranges) {
-					try {
-						// Calculate byte positions from grapheme indices
-						const from = this.graphemeIndexToBytePosition(range.location, graphemes);
-						const to = this.graphemeIndexToBytePosition(range.location + range.length, graphemes);
-
-						if (from >= 0 && to >= 0 && from < to) {
-							const decoration = this.createDecoration(annotation.type);
-							builder.add(from, to, decoration);
-						}
-					} catch (error) {
-						console.error('Error adding decoration for range:', range, error);
-					}
-				}
-			}
-
-			graphemeIndexToBytePosition(graphemeIndex: number, graphemes: string[]): number {
-				// Sum the byte length of all graphemes up to the index
-				let bytePosition = 0;
-				for (let i = 0; i < graphemeIndex && i < graphemes.length; i++) {
-					bytePosition += graphemes[i].length;
-				}
-				return bytePosition;
-			}
-
-			createDecoration(type: AuthorType): Decoration {
-				const className = this.getClassNameForType(type);
-				return Decoration.mark({ class: className });
-			}
-
-			getClassNameForType(type: AuthorType): string {
-				switch (type) {
-					case AuthorType.Human:
-						return 'md-annotation-human';
-					case AuthorType.AI:
-						return 'md-annotation-ai';
-					case AuthorType.Reference:
-						return 'md-annotation-reference';
-				}
+			buildDecorations(authorship: AuthorshipState): DecorationSet {
+				if (!plugin.settings.showVisualIndicators) return Decoration.none;
+				const ranges: Range<Decoration>[] = authorship.spans.map(span =>
+					DECORATIONS[span.type].range(span.from, span.to));
+				return Decoration.set(ranges, true);
 			}
 		}, {
 			decorations: v => v.decorations

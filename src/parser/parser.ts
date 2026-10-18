@@ -12,6 +12,7 @@ import {
 	AuthorIdentifier
 } from '../types';
 import { validateHash } from '../utils/hash';
+import { locateBlock } from '../annotations/block';
 import { countGraphemes, substringGraphemes } from '../utils/grapheme';
 
 /**
@@ -21,9 +22,9 @@ import { countGraphemes, substringGraphemes } from '../utils/grapheme';
  */
 export async function parseDocument(content: string): Promise<ParsedDocument> {
 	// Split into text and annotation block
-	const blockMatch = content.match(/\n---\n(.*?)\n\.\.\.\s*$/s);
+	const block = locateBlock(content);
 	
-	if (!blockMatch) {
+	if (!block) {
 		// No annotation block found
 		return {
 			text: content,
@@ -31,8 +32,8 @@ export async function parseDocument(content: string): Promise<ParsedDocument> {
 		};
 	}
 	
-	const text = content.substring(0, blockMatch.index);
-	const annotationBlockContent = blockMatch[1];
+	const text = content.substring(0, block.bodyEnd);
+	const annotationBlockContent = block.blockText;
 	
 	try {
 		const annotations = parseAnnotationBlock(annotationBlockContent);
@@ -43,7 +44,8 @@ export async function parseDocument(content: string): Promise<ParsedDocument> {
 		return {
 			text,
 			annotations,
-			hashValid
+			hashValid,
+			blockText: annotationBlockContent
 		};
 	} catch (error) {
 		// Invalid annotation block

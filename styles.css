@@ -1,94 +1,108 @@
 /* Markdown Annotations Plugin Styles */
 
-/* Author list styling */
-.markdown-annotations-author {
-	margin-bottom: 0.5em;
-	padding: 0.5em;
-	border-radius: 4px;
-	background-color: var(--background-secondary);
+/*
+ * Settings and modals use Obsidian's native components (declarative settings,
+ * Setting rows, ConfirmationModal), so no UI styles are needed here.
+ */
+
+/* Annotation colors. Overridable from a CSS snippet. */
+body {
+	--md-annotation-human-from: #3f8a2e;
+	--md-annotation-human-to: #4a63c4;
+	--md-annotation-ai-1: #f7811e;
+	--md-annotation-ai-2: #ec3f6a;
+	--md-annotation-ai-3: #c650d6;
+	--md-annotation-ai-4: #4f83f5;
+	/* Muted text faded further toward the page, so references recede but stay readable */
+	--md-annotation-reference: color-mix(in srgb, var(--text-muted), var(--background-primary) 40%);
 }
 
-.markdown-annotations-author .setting-item {
-	border: none;
-	padding: 0;
+.theme-dark {
+	--md-annotation-human-from: #85c96e;
+	--md-annotation-human-to: #82a6ff;
+	--md-annotation-ai-1: #ffa451;
+	--md-annotation-ai-2: #ff6b8f;
+	--md-annotation-ai-3: #dc8cff;
+	--md-annotation-ai-4: #78a9ff;
 }
 
-/* Modal button container */
-.modal-button-container {
-	display: flex;
-	justify-content: flex-end;
-	gap: 0.5em;
-	margin-top: 1em;
-	padding-top: 1em;
-	border-top: 1px solid var(--background-modifier-border);
+/*
+ * Text style (default), as in iA Writer: the gradient is painted through the
+ * letters. Each wrapped line fragment gets the full gradient.
+ */
+body:not(.md-annotations-style-background) .md-annotation-human {
+	background-image: linear-gradient(90deg, var(--md-annotation-human-from), var(--md-annotation-human-to));
 }
 
-.modal-button-container button {
-	padding: 0.5em 1em;
-	cursor: pointer;
+body:not(.md-annotations-style-background) .md-annotation-ai {
+	background-image: linear-gradient(90deg,
+		var(--md-annotation-ai-1),
+		var(--md-annotation-ai-2),
+		var(--md-annotation-ai-3),
+		var(--md-annotation-ai-4));
 }
 
-/* Setting description for authors section */
-.setting-item-description {
-	color: var(--text-muted);
-	font-size: 0.9em;
-	margin-bottom: 1em;
+body:not(.md-annotations-style-background) :is(.md-annotation-human, .md-annotation-ai) {
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+	/* Also covers nested syntax (bold, links) that sets its own color */
+	-webkit-text-fill-color: transparent;
+	/* Transparent text would otherwise hide the caret */
+	caret-color: var(--caret-color, var(--text-normal));
+	-webkit-box-decoration-break: clone;
+	box-decoration-break: clone;
 }
 
-/* Annotation highlighting in editor */
+body:not(.md-annotations-style-background) .md-annotation-reference {
+	color: var(--md-annotation-reference);
+}
+
+/* Background style: highlight behind the text */
 
 /* Human contributions - subtle green/blue tones */
-.md-annotation-human {
-	background: linear-gradient(to right, 
+.md-annotations-style-background .md-annotation-human {
+	background: linear-gradient(to right,
 		rgba(52, 168, 83, 0.12),
 		rgba(66, 133, 244, 0.12));
 	border-bottom: 1px solid rgba(52, 168, 83, 0.3);
 }
 
-/* AI-generated text - colorful gradient (Siri-like) */
-.md-annotation-ai {
-	background: linear-gradient(to right,
-		rgba(255, 69, 58, 0.15),
-		rgba(255, 159, 10, 0.15),
-		rgba(191, 90, 242, 0.15),
-		rgba(94, 92, 230, 0.15),
-		rgba(50, 173, 230, 0.15));
-	border-bottom: 1px solid rgba(255, 69, 58, 0.4);
-	animation: ai-shimmer 3s ease-in-out infinite;
-}
-
-@keyframes ai-shimmer {
-	0%, 100% { opacity: 1; }
-	50% { opacity: 0.85; }
+/* AI-generated text - soft violet → pink → sky wash, no underline or animation */
+.md-annotations-style-background .md-annotation-ai {
+	background: linear-gradient(90deg,
+		rgba(167, 139, 250, 0.13),
+		rgba(244, 114, 182, 0.13),
+		rgba(56, 189, 248, 0.13));
+	border-radius: 2px;
+	/* Round each wrapped line fragment rather than only the span's ends */
+	-webkit-box-decoration-break: clone;
+	box-decoration-break: clone;
 }
 
 /* Reference material - dimmed/gray with opacity */
-.md-annotation-reference {
+.md-annotations-style-background .md-annotation-reference {
 	background-color: rgba(128, 128, 128, 0.08);
 	opacity: 0.7;
 	border-bottom: 1px dotted rgba(128, 128, 128, 0.4);
 }
 
 /* Dark mode adjustments */
-.theme-dark .md-annotation-human {
+.theme-dark.md-annotations-style-background .md-annotation-human {
 	background: linear-gradient(to right,
 		rgba(87, 201, 121, 0.15),
 		rgba(100, 181, 246, 0.15));
 	border-bottom: 1px solid rgba(87, 201, 121, 0.4);
 }
 
-.theme-dark .md-annotation-ai {
-	background: linear-gradient(to right,
-		rgba(255, 105, 97, 0.18),
-		rgba(255, 179, 71, 0.18),
-		rgba(218, 143, 255, 0.18),
-		rgba(132, 129, 255, 0.18),
-		rgba(94, 196, 255, 0.18));
-	border-bottom: 1px solid rgba(255, 105, 97, 0.5);
-}
-
-.theme-dark .md-annotation-reference {
+.theme-dark.md-annotations-style-background .md-annotation-reference {
 	background-color: rgba(160, 160, 160, 0.1);
 	opacity: 0.65;
 	border-bottom: 1px dotted rgba(160, 160, 160, 0.5);
+}
+
+/* Annotation block: hidden in Reading view and exports */
+.md-annotations-block,
+.el-hr:has(+ .md-annotations-block) {
+	display: none;
 }

@@ -15,17 +15,24 @@ The Markdown Annotations settings tab allows you to manage authors that can be u
 
 ### General Settings
 
-#### Show visual indicators
+Settings are declared with Obsidian's settings API (1.13+), so every option below, including each author, shows up in the settings search.
+
+#### Show authors
 - **Type**: Toggle
-- **Description**: Display visual indicators for annotated text in the editor
+- **Description**: Highlight annotated text in the editor by author type
 - **Default**: Enabled
-- **Status**: Feature coming soon
+- Open editors update immediately. The **Toggle show authors** command flips the same setting.
 
 #### Warn on hash mismatch
 - **Type**: Toggle  
-- **Description**: Show warning when annotation hash validation fails
+- **Description**: Show a notice when opening a note whose annotations no longer match its text
 - **Default**: Enabled
-- **Current**: Enabled in validation commands
+
+### Authoring
+
+#### Default author
+- **Type**: Dropdown of your authors
+- **Description**: The author applied by *Mark selection as default author*. Starts as **Self** (Human), which is created on first run and can be renamed or deleted.
 
 ### Authors Section
 
@@ -33,7 +40,7 @@ The Authors section lets you create and manage author profiles that will be avai
 
 #### Adding an Author
 
-1. Select the **Add Author** button at the bottom of the Authors section
+1. Select the **+** button in the Authors header (on mobile, the **+ Add author** row below the list)
 2. A modal will appear with the following fields:
    - **Name** (required): Display name for the author
      - Example: "John Doe", "Claude AI", "Research Paper"
@@ -47,16 +54,18 @@ The Authors section lets you create and manage author profiles that will be avai
 
 #### Editing an Author
 
-1. Find the author in the list
-2. Select the **Edit** button
-3. Modify any fields
+1. Select **Edit** on the author's row
+2. Modify any fields
 4. Select **Save** to update
 
 #### Deleting an Author
 
-1. Find the author in the list
-2. Select the **Delete** button (warning style)
-3. The author will be immediately removed
+1. Select the delete button on the author's row (or focus the row and press Delete/Backspace)
+2. Confirm in the dialog. Annotations already in your notes are not changed
+
+#### Reordering Authors
+
+Drag an author by its handle to move it within the list.
 
 ## Author Display Format
 

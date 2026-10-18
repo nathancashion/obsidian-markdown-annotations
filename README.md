@@ -4,10 +4,12 @@ An Obsidian plugin for viewing, creating, and editing [Markdown Annotations](htt
 
 ## Features
 
-- **Visual Highlighting**: See annotated text with color-coded highlights inspired by iA Writer
-  - Human contributions: Subtle green/blue gradient
-  - AI-generated text: Colorful gradient (orange, red, violet, blue) with subtle animation
-  - Reference material: Dimmed gray appearance
+- **Visual Highlighting**: Authorship colors the text itself, as in iA Writer
+  - Human contributions: Subtle green → blue text
+  - AI-generated text: Orange → pink → violet → blue gradient text
+  - Reference material: Dimmed text
+  - Prefer highlights? Set **Highlight style** to *Background highlight* for a soft wash behind the text instead
+  - Colors are CSS variables (`--md-annotation-ai-1` … `-4`, `--md-annotation-human-from`/`-to`, `--md-annotation-reference`) you can override in a snippet
 - **View Annotations**: Display authorship metadata embedded in your Markdown files
 - **Author Management**: Configure reusable author profiles in settings
 - **Validate Annotations**: Check hash integrity to ensure annotations are correctly positioned
@@ -42,12 +44,30 @@ The plugin supports three types of annotations:
 ### Configure Authors
 
 1. Open Obsidian **Settings → Markdown Annotations**
-2. Select **Add Author** to create a new author profile
+2. Select **+** in the Authors header to create a new author profile
 3. Fill in:
    - **Name**: The author's display name
    - **Type**: Choose Human (@), AI (&), or Reference (*)
    - **Identifier**: Optional (email, website, etc.)
-4. Authors can be edited or deleted from the settings panel
+4. Select an author to edit it; delete or drag to reorder from the list
+
+### Mark Authorship in the Editor
+
+Right-click in the editor:
+
+- **Mark as ›** (with a selection) or **Change author to ›** (cursor inside an annotated passage): pick an author; the current one is checked
+- **Clear authorship** / **Clear authorship of passage**
+- **Paste as ›**: paste the clipboard's text, attributed to the chosen author. One undo removes the paste and its authorship together
+
+Each submenu ends with **New author…**, which creates the author and applies it in one go. The **Paste as…** command does the same from the keyboard (assign it a hotkey in Settings → Hotkeys).
+
+Paste as inserts plain text; use regular Paste for rich content that Obsidian converts to Markdown. The annotation block is rewritten with a fresh hash each time, and kept in sync as you type in notes that already have one. If a note's annotations no longer match its text, you're asked to keep or discard them first, as the spec requires.
+
+A **Self** (Human) author is created on first run and set as the **Default author** (Obsidian has no API for your name, so rename it in settings). The *Mark selection as default author* command applies it from the keyboard.
+
+### Reading View and Export
+
+The annotation block is hidden in Reading view and left out of PDF export.
 
 ### Commands
 
