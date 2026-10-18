@@ -3,21 +3,29 @@
  */
 
 import { Plugin, Notice, TFile } from 'obsidian';
-import { MarkdownAnnotationsSettings, normalizeSettings } from './settings';
+import { Author, MarkdownAnnotationsSettings, normalizeSettings } from './settings';
 import { parseDocument } from './parser/parser';
 import { MarkdownAnnotationsSettingTab } from './ui/settings-tab';
 import { createAnnotationExtension } from './editor/annotations-extension';
+import { registerAuthorshipMenu } from './editor/authorship-menu';
+import { hideAnnotationBlock } from './reading/hide-block';
+
+const BACKGROUND_STYLE_CLASS = 'md-annotations-style-background';
 
 export default class MarkdownAnnotationsPlugin extends Plugin {
 	settings: MarkdownAnnotationsSettings = normalizeSettings(null);
 
 	async onload() {
 		await this.loadSettings();
+		this.applyHighlightStyle();
+		this.register(() => document.body.removeClass(BACKGROUND_STYLE_CLASS));
 
 		this.addSettingTab(new MarkdownAnnotationsSettingTab(this.app, this));
 
 		// Register editor extension for annotation highlighting (always register, it checks settings internally)
 		this.registerEditorExtension(createAnnotationExtension(this));
+		registerAuthorshipMenu(this);
+		this.registerMarkdownPostProcessor(hideAnnotationBlock);
 
 		this.registerEvent(this.app.workspace.on('file-open', (file) => {
 			if (file) void this.warnIfHashMismatch(file);
@@ -92,6 +100,16 @@ export default class MarkdownAnnotationsPlugin extends Plugin {
 		});
 	}
 
+	/** Add an author and save. Open settings tabs refresh themselves on next display. */
+	async addAuthor(author: Author): Promise<void> {
+		this.settings.authors.push(author);
+		await this.saveSettings();
+	}
+
+	getDefaultAuthor(): Author | null {
+		return this.settings.authors.find(a => a.id === this.settings.defaultAuthorId) ?? null;
+	}
+
 	async loadSettings() {
 		this.settings = normalizeSettings(await this.loadData());
 	}
@@ -99,7 +117,12 @@ export default class MarkdownAnnotationsPlugin extends Plugin {
 	/** Persist settings and re-run editor extensions so highlights reflect the change. */
 	async saveSettings() {
 		await this.saveData(this.settings);
+		this.applyHighlightStyle();
 		this.app.workspace.updateOptions();
+	}
+
+	private applyHighlightStyle() {
+		document.body.toggleClass(BACKGROUND_STYLE_CLASS, this.settings.highlightStyle === 'background');
 	}
 
 	private async warnIfHashMismatch(file: TFile): Promise<void> {

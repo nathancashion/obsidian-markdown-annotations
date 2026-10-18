@@ -28,6 +28,12 @@ Settings are declared with Obsidian's settings API (1.13+), so every option belo
 - **Description**: Show a notice when opening a note whose annotations no longer match its text
 - **Default**: Enabled
 
+### Authoring
+
+#### Default author
+- **Type**: Dropdown of your authors
+- **Description**: The author applied by *Mark selection as default author*. Starts as **Self** (Human), which is created on first run and can be renamed or deleted.
+
 ### Authors Section
 
 The Authors section lets you create and manage author profiles that will be available when creating new annotations.
@@ -48,7 +54,7 @@ The Authors section lets you create and manage author profiles that will be avai
 
 #### Editing an Author
 
-1. Select the author's row in the list
+1. Select **Edit** on the author's row
 2. Modify any fields
 4. Select **Save** to update
 

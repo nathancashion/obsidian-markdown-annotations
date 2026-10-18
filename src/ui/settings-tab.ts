@@ -19,7 +19,7 @@ import {
 	type TextComponent,
 } from 'obsidian';
 import type MarkdownAnnotationsPlugin from '../main';
-import { Author, MarkdownAnnotationsSettings } from '../settings';
+import { Author, MarkdownAnnotationsSettings, ensureDefaultAuthor } from '../settings';
 import { AuthorType } from '../types';
 
 const AUTHOR_TYPE_LABELS: Record<AuthorType, string> = {
@@ -56,10 +56,39 @@ export class MarkdownAnnotationsSettingTab extends PluginSettingTab {
 						control: { type: 'toggle', key: 'showVisualIndicators' },
 					},
 					{
+						name: 'Highlight style',
+						desc: 'Color the annotated text itself, as iA Writer does, or highlight behind it.',
+						aliases: ['gradient', 'color', 'iA Writer', 'appearance'],
+						control: {
+							type: 'dropdown',
+							key: 'highlightStyle',
+							disabled: () => !this.plugin.settings.showVisualIndicators,
+							options: { text: 'Text color', background: 'Background highlight' },
+						},
+					},
+					{
 						name: 'Warn on hash mismatch',
 						desc: 'Show a notice when opening a note whose annotations no longer match its text, for example after editing it outside Obsidian.',
 						aliases: ['validate', 'SHA-256', 'integrity'],
 						control: { type: 'toggle', key: 'warnOnHashMismatch' },
+					},
+				],
+			},
+			{
+				type: 'group',
+				heading: 'Authoring',
+				items: [
+					{
+						name: 'Default author',
+						desc: 'Used by “Mark selection as default author”. Usually you.',
+						aliases: ['self', 'me', 'my name', 'human'],
+						visible: () => this.plugin.settings.authors.length > 0,
+						control: {
+							type: 'dropdown',
+							key: 'defaultAuthorId',
+							options: Object.fromEntries(this.plugin.settings.authors.map(a =>
+								[a.id, `${AUTHOR_TYPE_LABELS[a.type]}: ${a.name}`])),
+						},
 					},
 				],
 			},
@@ -73,8 +102,18 @@ export class MarkdownAnnotationsSettingTab extends PluginSettingTab {
 
 	/** Route control writes through the plugin so open editors refresh too. */
 	async setControlValue(key: string, value: unknown): Promise<void> {
-		if (!isToggleKey(key)) return;
-		this.plugin.settings[key] = value === true;
+		if (isToggleKey(key)) {
+			this.plugin.settings[key] = value === true;
+			this.refreshDomState();
+		} else if (key === 'highlightStyle') {
+			this.plugin.settings.highlightStyle = value === 'background' ? 'background' : 'text';
+		} else if (key === 'defaultAuthorId' && typeof value === 'string') {
+			this.plugin.settings.defaultAuthorId = value;
+			// The authors list marks the default
+			this.update();
+		} else {
+			return;
+		}
 		await this.plugin.saveSettings();
 	}
 
@@ -95,13 +134,30 @@ export class MarkdownAnnotationsSettingTab extends PluginSettingTab {
 				void this.plugin.saveSettings();
 				this.update();
 			},
-			items: authors.map((author, index) => ({
-				name: `${AUTHOR_TYPE_LABELS[author.type]}: ${author.name}`,
-				desc: author.identifier ? `<${author.identifier}>` : 'No identifier',
-				aliases: [author.name, author.identifier ?? '', AUTHOR_TYPE_LABELS[author.type]],
-				action: () => this.openAuthorModal(index),
-			})),
+			items: authors.map((author, index) => {
+				const name = `${AUTHOR_TYPE_LABELS[author.type]}: ${author.name}`;
+				const desc = this.describeAuthor(author);
+				return {
+					name,
+					desc,
+					aliases: [author.name, author.identifier ?? '', AUTHOR_TYPE_LABELS[author.type]],
+					render: (setting: Setting) => {
+						setting
+							.setName(name)
+							.setDesc(desc)
+							.addButton(button => button
+								.setButtonText('Edit')
+								.onClick(() => this.openAuthorModal(index)));
+					},
+				};
+			}),
 		};
+	}
+
+	private describeAuthor(author: Author): string {
+		const parts = [author.identifier ? `<${author.identifier}>` : 'No identifier'];
+		if (author.id === this.plugin.settings.defaultAuthorId) parts.unshift('Default author');
+		return parts.join(' · ');
 	}
 
 	private openAuthorModal(index: number | null): void {
@@ -130,6 +186,7 @@ export class MarkdownAnnotationsSettingTab extends PluginSettingTab {
 				.setCta()
 				.onClick(async () => {
 					this.plugin.settings.authors.splice(index, 1);
+					ensureDefaultAuthor(this.plugin.settings);
 					await this.plugin.saveSettings();
 					this.update();
 				}));
@@ -142,7 +199,7 @@ export class MarkdownAnnotationsSettingTab extends PluginSettingTab {
 /**
  * Modal for adding/editing an author
  */
-class AuthorEditModal extends Modal {
+export class AuthorEditModal extends Modal {
 	private author: Author | null;
 	private onSubmit: (author: Author) => Promise<void>;
 

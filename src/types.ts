@@ -76,4 +76,6 @@ export interface ParsedDocument {
 	annotations?: AnnotationBlock;
 	/** Whether the hash validation passed */
 	hashValid: boolean;
+	/** Raw annotation lines between `---` and `...`, if a block was found */
+	blockText?: string;
 }
