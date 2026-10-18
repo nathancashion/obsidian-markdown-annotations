@@ -2,43 +2,39 @@
  * Main plugin entry point
  */
 
-import { Plugin, Notice } from 'obsidian';
-import { MarkdownAnnotationsSettings, DEFAULT_SETTINGS } from './settings';
+import { Plugin, Notice, TFile } from 'obsidian';
+import { MarkdownAnnotationsSettings, normalizeSettings } from './settings';
 import { parseDocument } from './parser/parser';
 import { MarkdownAnnotationsSettingTab } from './ui/settings-tab';
 import { createAnnotationExtension } from './editor/annotations-extension';
 
 export default class MarkdownAnnotationsPlugin extends Plugin {
-	settings: MarkdownAnnotationsSettings;
+	settings: MarkdownAnnotationsSettings = normalizeSettings(null);
 
 	async onload() {
-		console.log('Loading Markdown Annotations plugin');
-		
-		// Load settings
 		await this.loadSettings();
-		
-		// Add settings tab
+
 		this.addSettingTab(new MarkdownAnnotationsSettingTab(this.app, this));
-		
+
 		// Register editor extension for annotation highlighting (always register, it checks settings internally)
 		this.registerEditorExtension(createAnnotationExtension(this));
-		
-		// Add toggle command
+
+		this.registerEvent(this.app.workspace.on('file-open', (file) => {
+			if (file) void this.warnIfHashMismatch(file);
+		}));
+
 		this.addCommand({
 			id: 'toggle-show-authors',
 			name: 'Toggle show authors',
 			callback: async () => {
 				this.settings.showVisualIndicators = !this.settings.showVisualIndicators;
 				await this.saveSettings();
-				
+
 				const status = this.settings.showVisualIndicators ? 'shown' : 'hidden';
 				new Notice(`Authors ${status}`);
-				
-				// Update workspace to refresh all editors
-				this.app.workspace.updateOptions();
 			}
 		});
-		
+
 		// Add command to validate annotations in current file
 		this.addCommand({
 			id: 'validate-annotations',
@@ -46,24 +42,24 @@ export default class MarkdownAnnotationsPlugin extends Plugin {
 			editorCallback: async (editor) => {
 				const content = editor.getValue();
 				const parsed = await parseDocument(content);
-				
+
 				if (!parsed.annotations) {
 					new Notice('No annotations found in this document');
 					return;
 				}
-				
+
 				if (parsed.hashValid) {
 					new Notice('✓ Annotations are valid');
 				} else {
 					new Notice('⚠ Warning: Annotations may be misplaced (hash mismatch)');
 				}
-				
+
 				// Show annotation summary
 				const authorCount = parsed.annotations.authorAnnotations.length;
 				new Notice(`Found ${authorCount} author annotation(s)`);
 			}
 		});
-		
+
 		// Add command to show annotation info
 		this.addCommand({
 			id: 'show-annotation-info',
@@ -71,40 +67,47 @@ export default class MarkdownAnnotationsPlugin extends Plugin {
 			editorCallback: async (editor) => {
 				const content = editor.getValue();
 				const parsed = await parseDocument(content);
-				
+
 				if (!parsed.annotations) {
 					new Notice('No annotations found in this document');
 					return;
 				}
-				
+
 				// Build info message
 				let info = `Annotations:\n`;
 				info += `Hash: ${parsed.hashValid ? '✓ Valid' : '✗ Invalid'}\n`;
 				info += `\nAuthors:\n`;
-				
+
 				for (const author of parsed.annotations.authorAnnotations) {
-					const type = author.type === '@' ? 'Human' : 
+					const type = author.type === '@' ? 'Human' :
 					           author.type === '&' ? 'AI' : 'Reference';
 					const name = author.name || 'Unnamed';
 					const rangeCount = author.ranges.length;
 					info += `  ${type}: ${name} (${rangeCount} range(s))\n`;
 				}
-				
+
 				console.log(info);
 				new Notice('Annotation info logged to console');
 			}
 		});
 	}
 
-	onunload() {
-		console.log('Unloading Markdown Annotations plugin');
-	}
-
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		this.settings = normalizeSettings(await this.loadData());
 	}
 
+	/** Persist settings and re-run editor extensions so highlights reflect the change. */
 	async saveSettings() {
 		await this.saveData(this.settings);
+		this.app.workspace.updateOptions();
+	}
+
+	private async warnIfHashMismatch(file: TFile): Promise<void> {
+		if (!this.settings.warnOnHashMismatch || file.extension !== 'md') return;
+
+		const parsed = await parseDocument(await this.app.vault.cachedRead(file));
+		if (parsed.annotations && !parsed.hashValid) {
+			new Notice(`⚠ Annotations in “${file.basename}” may be misplaced: the text changed since they were written.`);
+		}
 	}
 }

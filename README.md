@@ -6,7 +6,7 @@ An Obsidian plugin for viewing, creating, and editing [Markdown Annotations](htt
 
 - **Visual Highlighting**: See annotated text with color-coded highlights inspired by iA Writer
   - Human contributions: Subtle green/blue gradient
-  - AI-generated text: Colorful gradient (orange, red, violet, blue) with subtle animation
+  - AI-generated text: Soft violet → pink → sky gradient wash with rounded corners
   - Reference material: Dimmed gray appearance
 - **View Annotations**: Display authorship metadata embedded in your Markdown files
 - **Author Management**: Configure reusable author profiles in settings
@@ -42,12 +42,12 @@ The plugin supports three types of annotations:
 ### Configure Authors
 
 1. Open Obsidian **Settings → Markdown Annotations**
-2. Select **Add Author** to create a new author profile
+2. Select **+** in the Authors header to create a new author profile
 3. Fill in:
    - **Name**: The author's display name
    - **Type**: Choose Human (@), AI (&), or Reference (*)
    - **Identifier**: Optional (email, website, etc.)
-4. Authors can be edited or deleted from the settings panel
+4. Select an author to edit it; delete or drag to reorder from the list
 
 ### Commands
 

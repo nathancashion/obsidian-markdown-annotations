@@ -1,65 +1,30 @@
 /* Markdown Annotations Plugin Styles */
 
-/* Author list styling */
-.markdown-annotations-author {
-	margin-bottom: 0.5em;
-	padding: 0.5em;
-	border-radius: 4px;
-	background-color: var(--background-secondary);
-}
-
-.markdown-annotations-author .setting-item {
-	border: none;
-	padding: 0;
-}
-
-/* Modal button container */
-.modal-button-container {
-	display: flex;
-	justify-content: flex-end;
-	gap: 0.5em;
-	margin-top: 1em;
-	padding-top: 1em;
-	border-top: 1px solid var(--background-modifier-border);
-}
-
-.modal-button-container button {
-	padding: 0.5em 1em;
-	cursor: pointer;
-}
-
-/* Setting description for authors section */
-.setting-item-description {
-	color: var(--text-muted);
-	font-size: 0.9em;
-	margin-bottom: 1em;
-}
+/*
+ * Settings and modals use Obsidian's native components (declarative settings,
+ * Setting rows, ConfirmationModal), so no UI styles are needed here.
+ */
 
 /* Annotation highlighting in editor */
 
 /* Human contributions - subtle green/blue tones */
 .md-annotation-human {
-	background: linear-gradient(to right, 
+	background: linear-gradient(to right,
 		rgba(52, 168, 83, 0.12),
 		rgba(66, 133, 244, 0.12));
 	border-bottom: 1px solid rgba(52, 168, 83, 0.3);
 }
 
-/* AI-generated text - colorful gradient (Siri-like) */
+/* AI-generated text - soft violet → pink → sky wash, no underline or animation */
 .md-annotation-ai {
-	background: linear-gradient(to right,
-		rgba(255, 69, 58, 0.15),
-		rgba(255, 159, 10, 0.15),
-		rgba(191, 90, 242, 0.15),
-		rgba(94, 92, 230, 0.15),
-		rgba(50, 173, 230, 0.15));
-	border-bottom: 1px solid rgba(255, 69, 58, 0.4);
-	animation: ai-shimmer 3s ease-in-out infinite;
-}
-
-@keyframes ai-shimmer {
-	0%, 100% { opacity: 1; }
-	50% { opacity: 0.85; }
+	background: linear-gradient(90deg,
+		rgba(167, 139, 250, 0.13),
+		rgba(244, 114, 182, 0.13),
+		rgba(56, 189, 248, 0.13));
+	border-radius: 2px;
+	/* Round each wrapped line fragment rather than only the span's ends */
+	-webkit-box-decoration-break: clone;
+	box-decoration-break: clone;
 }
 
 /* Reference material - dimmed/gray with opacity */
@@ -75,16 +40,6 @@
 		rgba(87, 201, 121, 0.15),
 		rgba(100, 181, 246, 0.15));
 	border-bottom: 1px solid rgba(87, 201, 121, 0.4);
-}
-
-.theme-dark .md-annotation-ai {
-	background: linear-gradient(to right,
-		rgba(255, 105, 97, 0.18),
-		rgba(255, 179, 71, 0.18),
-		rgba(218, 143, 255, 0.18),
-		rgba(132, 129, 255, 0.18),
-		rgba(94, 196, 255, 0.18));
-	border-bottom: 1px solid rgba(255, 105, 97, 0.5);
 }
 
 .theme-dark .md-annotation-reference {

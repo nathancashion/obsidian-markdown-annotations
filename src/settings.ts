@@ -32,3 +32,21 @@ export const DEFAULT_SETTINGS: MarkdownAnnotationsSettings = {
 	warnOnHashMismatch: true,
 	authors: []
 };
+
+const AUTHOR_TYPES = new Set<string>(Object.values(AuthorType));
+
+/**
+ * Merge stored data over the defaults. Each load gets its own `authors` array,
+ * so edits never mutate `DEFAULT_SETTINGS`, and malformed author entries are dropped.
+ */
+export function normalizeSettings(stored: unknown): MarkdownAnnotationsSettings {
+	const data = (stored && typeof stored === 'object' ? stored : {}) as Partial<MarkdownAnnotationsSettings>;
+	const authors = Array.isArray(data.authors) ? data.authors : [];
+	return {
+		showVisualIndicators: data.showVisualIndicators ?? DEFAULT_SETTINGS.showVisualIndicators,
+		warnOnHashMismatch: data.warnOnHashMismatch ?? DEFAULT_SETTINGS.warnOnHashMismatch,
+		authors: authors
+			.filter((a): a is Author => !!a && typeof a.id === 'string' && typeof a.name === 'string' && AUTHOR_TYPES.has(a.type))
+			.map((a) => ({ ...a })),
+	};
+}

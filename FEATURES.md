@@ -33,9 +33,8 @@
 - Dark mode: Brighter colors for better visibility
 
 **AI-generated text (&)**:
-- Vibrant multi-color gradient (red, orange, purple, indigo, blue)
-- Reminiscent of Apple's Siri design
-- Subtle pulsing animation (3-second cycle)
+- Soft violet → pink → sky gradient wash
+- Rounded corners, no underline, no animation
 - Higher opacity for visibility
 
 **Reference material (*)**:
@@ -69,7 +68,7 @@
 **UI Features**:
 - Settings tab in Obsidian preferences
 - Modal dialog for add/edit operations
-- List view with inline Edit/Delete buttons
+- Native settings list: select to edit, delete with confirmation, drag to reorder
 - Visual distinction between author types
 - Clean, Obsidian-styled interface
 
@@ -115,7 +114,7 @@
 **What it does**: Configure plugin behavior
 
 **General settings**:
-- **Show visual indicators**: Toggle annotation highlighting on/off
+- **Show authors**: Toggle annotation highlighting on/off
 - **Warn on hash mismatch**: Control hash validation warnings
 
 **Authors section**:
@@ -162,7 +161,7 @@ obsidian-markdown-annotations/
 
 ## Compatibility
 
-- **Obsidian**: Requires v0.15.0 or later
+- **Obsidian**: Requires v1.13.0 or later
 - **Platform**: Desktop and mobile (isDesktopOnly: false)
 - **Markdown**: Standard markdown files with annotation blocks
 - **iA Writer**: Full compatibility with iA Writer's annotation format
@@ -173,7 +172,6 @@ obsidian-markdown-annotations/
 - **Many annotations**: Efficient range-based decorations
 - **Real-time updates**: Incremental parsing on changes only
 - **Memory**: Lightweight state management
-- **Animations**: GPU-accelerated CSS for smooth performance
 
 ## Known Limitations
 

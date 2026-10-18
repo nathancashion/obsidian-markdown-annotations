@@ -3,11 +3,11 @@
  */
 
 import { EditorView, Decoration, DecorationSet, ViewPlugin, ViewUpdate } from '@codemirror/view';
-import { StateField, StateEffect } from '@codemirror/state';
-import { RangeSetBuilder } from '@codemirror/state';
+import { StateField, StateEffect, type Range } from '@codemirror/state';
 import { parseDocument } from '../parser/parser';
-import { AuthorAnnotation, AuthorType, ParsedDocument } from '../types';
+import { AuthorType, ParsedDocument } from '../types';
 import { splitGraphemes } from '../utils/grapheme';
+import type MarkdownAnnotationsPlugin from '../main';
 
 /**
  * State effect to update annotations
@@ -31,118 +31,103 @@ const annotationsField = StateField.define<ParsedDocument | null>({
 	}
 });
 
+const DECORATIONS: Record<AuthorType, Decoration> = {
+	[AuthorType.Human]: Decoration.mark({ class: 'md-annotation-human' }),
+	[AuthorType.AI]: Decoration.mark({ class: 'md-annotation-ai' }),
+	[AuthorType.Reference]: Decoration.mark({ class: 'md-annotation-reference' }),
+};
+
 /**
  * Create the annotation highlighting extension
  */
-export function createAnnotationExtension(plugin: any) {
+export function createAnnotationExtension(plugin: MarkdownAnnotationsPlugin) {
 	return [
 		annotationsField,
 		ViewPlugin.fromClass(class {
-			plugin: any;
-			decorations: DecorationSet;
-			pending: boolean;
+			decorations: DecorationSet = Decoration.none;
+			private parsing = false;
+			private stale = false;
+			private destroyed = false;
 
 			constructor(view: EditorView) {
-				this.plugin = plugin;
-				this.decorations = Decoration.none;
-				this.pending = false;
-				this.updateAnnotations(view);
+				void this.updateAnnotations(view);
 			}
 
 			update(update: ViewUpdate) {
-				if (update.docChanged) {
-					this.updateAnnotations(update.view);
-				}
-				
-				// Update decorations when annotations state changes
 				const annotations = update.state.field(annotationsField);
-				if (annotations) {
-					this.decorations = this.buildDecorations(update.view, annotations);
+				const annotationsChanged = annotations !== update.startState.field(annotationsField);
+				// `workspace.updateOptions()` reconfigures the editor after a settings change
+				const reconfigured = update.transactions.some(tr => tr.reconfigured);
+
+				if (annotationsChanged || reconfigured) {
+					this.decorations = this.buildDecorations(annotations);
+				} else if (update.docChanged) {
+					// Keep highlights attached to their text until the reparse lands
+					this.decorations = this.decorations.map(update.changes);
 				}
+
+				if (update.docChanged) {
+					void this.updateAnnotations(update.view);
+				}
+			}
+
+			destroy() {
+				this.destroyed = true;
 			}
 
 			async updateAnnotations(view: EditorView) {
-				if (this.pending) return;
-				this.pending = true;
+				// Parsing is async (hashing), so coalesce edits that arrive mid-parse
+				// into one more pass rather than dropping them.
+				if (this.parsing) {
+					this.stale = true;
+					return;
+				}
+				this.parsing = true;
 
 				try {
-					const content = view.state.doc.toString();
-					const parsed = await parseDocument(content);
-					
-					// Dispatch effect to update annotations state
-					view.dispatch({
-						effects: setAnnotationsEffect.of(parsed)
-					});
+					do {
+						this.stale = false;
+						const parsed = await parseDocument(view.state.doc.toString());
+						if (this.destroyed) return;
+						if (!this.stale) {
+							view.dispatch({ effects: setAnnotationsEffect.of(parsed) });
+						}
+					} while (this.stale);
 				} catch (error) {
 					console.error('Error parsing annotations:', error);
 				} finally {
-					this.pending = false;
+					this.parsing = false;
 				}
 			}
 
-			buildDecorations(view: EditorView, parsed: ParsedDocument): DecorationSet {
-				const builder = new RangeSetBuilder<Decoration>();
-
-				// Check if visual indicators are enabled
-				if (!this.plugin.settings.showVisualIndicators || !parsed.annotations) {
-					return builder.finish();
+			buildDecorations(parsed: ParsedDocument | null): DecorationSet {
+				if (!plugin.settings.showVisualIndicators || !parsed?.annotations) {
+					return Decoration.none;
 				}
 
-				// Convert text to grapheme array for accurate positioning
+				// offsets[i] is the string offset of grapheme i
 				const graphemes = splitGraphemes(parsed.text);
-				
-				// Process each author annotation
-				for (const annotation of parsed.annotations.authorAnnotations) {
-					this.addAnnotationDecorations(annotation, graphemes, builder);
+				const offsets = new Array<number>(graphemes.length + 1);
+				offsets[0] = 0;
+				for (let i = 0; i < graphemes.length; i++) {
+					offsets[i + 1] = offsets[i] + graphemes[i].length;
 				}
+				const toOffset = (index: number) => offsets[Math.min(Math.max(index, 0), graphemes.length)];
 
-				return builder.finish();
-			}
-
-			addAnnotationDecorations(
-				annotation: AuthorAnnotation,
-				graphemes: string[],
-				builder: RangeSetBuilder<Decoration>
-			) {
-				for (const range of annotation.ranges) {
-					try {
-						// Calculate byte positions from grapheme indices
-						const from = this.graphemeIndexToBytePosition(range.location, graphemes);
-						const to = this.graphemeIndexToBytePosition(range.location + range.length, graphemes);
-
-						if (from >= 0 && to >= 0 && from < to) {
-							const decoration = this.createDecoration(annotation.type);
-							builder.add(from, to, decoration);
+				const ranges: Range<Decoration>[] = [];
+				for (const annotation of parsed.annotations.authorAnnotations) {
+					const decoration = DECORATIONS[annotation.type];
+					for (const range of annotation.ranges) {
+						const from = toOffset(range.location);
+						const to = toOffset(range.location + range.length);
+						if (from < to) {
+							ranges.push(decoration.range(from, to));
 						}
-					} catch (error) {
-						console.error('Error adding decoration for range:', range, error);
 					}
 				}
-			}
 
-			graphemeIndexToBytePosition(graphemeIndex: number, graphemes: string[]): number {
-				// Sum the byte length of all graphemes up to the index
-				let bytePosition = 0;
-				for (let i = 0; i < graphemeIndex && i < graphemes.length; i++) {
-					bytePosition += graphemes[i].length;
-				}
-				return bytePosition;
-			}
-
-			createDecoration(type: AuthorType): Decoration {
-				const className = this.getClassNameForType(type);
-				return Decoration.mark({ class: className });
-			}
-
-			getClassNameForType(type: AuthorType): string {
-				switch (type) {
-					case AuthorType.Human:
-						return 'md-annotation-human';
-					case AuthorType.AI:
-						return 'md-annotation-ai';
-					case AuthorType.Reference:
-						return 'md-annotation-reference';
-				}
+				// Authors' ranges interleave, so let CodeMirror sort them
+				return Decoration.set(ranges, true);
 			}
 		}, {
 			decorations: v => v.decorations
