@@ -63,6 +63,11 @@ Each submenu ends with **New author…**, which creates the author and applies i
 
 Paste as inserts plain text; use regular Paste for rich content that Obsidian converts to Markdown. The annotation block is rewritten with a fresh hash each time, and kept in sync as you type in notes that already have one. If a note's annotations no longer match its text, you're asked to keep or discard them first, as the spec requires.
 
+### Automatic Attribution
+
+- **Typing**: text you type inside someone else's passage (AI or reference text, say), or over annotated text, is attributed to the **Default author**, and stays yours as you keep typing. Typing in unannotated text leaves it unannotated.
+- **Pasting** (desktop): when you paste text copied from a web page whose address matches an author's **Identifier**, it's attributed to that author, as in iA Writer. Give Claude the identifier `claude.ai` and text copied from claude.ai is marked as Claude's. Subdomains match too, an identifier with a path (`x.com/i/grok`) only matches pages under it, and `chatgpt.com` and `chat.openai.com` are treated as the same site. This works with text copied from Chrome, Edge, Arc, Brave and Safari; desktop apps such as the ChatGPT or Claude apps don't record where text came from. Turn it off with **Recognize pasted text**.
+
 A **Self** (Human) author is created on first run and set as the **Default author** (Obsidian has no API for your name, so rename it in settings). The *Mark selection as default author* command applies it from the keyboard.
 
 ### Reading View and Export
