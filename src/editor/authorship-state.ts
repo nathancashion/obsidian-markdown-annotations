@@ -7,7 +7,7 @@
  * spans back into the annotation block with a fresh hash.
  */
 
-import { Annotation, ChangeDesc, ChangeSet, EditorState, StateEffect, StateField, Transaction } from '@codemirror/state';
+import { Annotation, ChangeDesc, ChangeSet, EditorState, Facet, StateEffect, StateField, Transaction } from '@codemirror/state';
 import type { EditorView } from '@codemirror/view';
 import { editorInfoField } from 'obsidian';
 import { AuthorEntry, buildBlockText, formatAuthorKey, locateBlock } from '../annotations/block';
@@ -21,6 +21,8 @@ export interface Span {
 	key: string;
 	type: AuthorType;
 }
+
+export type AuthorRef = Pick<Span, 'key' | 'type'>;
 
 export interface AuthorshipState {
 	/** Sorted, non-overlapping spans in document offsets */
@@ -44,10 +46,28 @@ export const setAuthorship = StateEffect.define<AuthorshipState>();
 /** Marks transactions this plugin made, so they don't schedule another write. */
 export const authorshipWrite = Annotation.define<boolean>();
 
+/** Who typed text is attributed to (the default author, usually you). Read on each edit, so it follows settings. */
+export const typingAuthor = Facet.define<() => AuthorRef | null, () => AuthorRef | null>({
+	combine: values => values[0] ?? (() => null),
+});
+
+/** The next edit is a paste by this author (or cancel that with null). */
+export const expectPaste = StateEffect.define<AuthorRef | null>();
+
+export const pendingPasteField = StateField.define<AuthorRef | null>({
+	create: () => null,
+	update(value, tr) {
+		for (const effect of tr.effects) {
+			if (effect.is(expectPaste)) return effect.value;
+		}
+		return tr.docChanged ? null : value;
+	}
+});
+
 export const authorshipField = StateField.define<AuthorshipState>({
 	create: () => EMPTY,
 	update(value, tr) {
-		let next = tr.docChanged ? { ...value, spans: mapSpans(value.spans, tr.changes) } : value;
+		let next = tr.docChanged ? { ...value, spans: attributeEdit(value.spans, tr) } : value;
 		for (const effect of tr.effects) {
 			if (effect.is(setAuthorship)) {
 				next = effect.value;
@@ -104,12 +124,38 @@ function mapSpans(spans: Span[], changes: ChangeDesc): Span[] {
 	return mapped;
 }
 
+/**
+ * Map spans through an edit, then credit inserted text: a paste whose source was
+ * recognized goes to that author, and typing goes to the typing author when it
+ * lands in someone else's passage, replaces annotated text, or continues their own.
+ */
+function attributeEdit(spans: Span[], tr: Transaction): Span[] {
+	let mapped = mapSpans(spans, tr.changes);
+	if (tr.annotation(authorshipWrite)) return mapped;
+
+	const pasted = tr.startState.field(pendingPasteField, false) ?? null;
+	const typed = !pasted && tr.isUserEvent('input') && !tr.isUserEvent('input.paste') && !tr.isUserEvent('input.drop');
+	const author = pasted ?? (typed ? tr.state.facet(typingAuthor)() : null);
+	if (!author) return mapped;
+
+	tr.changes.iterChanges((fromA, toA, fromB, toB) => {
+		if (fromB === toB) return;
+		const claim = pasted
+			|| (toA > fromA && spans.some(span => span.to > fromA && span.from < toA))
+			|| mapped.some(span => span.key === author.key
+				? span.to === fromB || span.from === toB
+				: span.from < toB && span.to > fromB);
+		if (claim) mapped = replaceSpans(mapped, fromB, toB, author);
+	});
+	return mapped;
+}
+
 /** Replace whatever authorship covers `[from, to)` with `author`, or clear it when null. */
 export function replaceSpans(
 	spans: Span[],
 	from: number,
 	to: number,
-	author: Pick<Span, 'key' | 'type'> | null
+	author: AuthorRef | null
 ): Span[] {
 	const result: Span[] = [];
 	for (const span of spans) {
@@ -183,7 +229,7 @@ export interface PasteEdit {
 	to: number;
 	text: string;
 	/** Author of the pasted text */
-	author: Pick<Span, 'key' | 'type'>;
+	author: AuthorRef;
 }
 
 export interface WriteOptions {

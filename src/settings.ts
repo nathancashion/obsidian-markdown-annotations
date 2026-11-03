@@ -31,6 +31,8 @@ export interface MarkdownAnnotationsSettings {
 	authors: Author[];
 	/** Author used by "Mark selection as default author"; usually you */
 	defaultAuthorId: string | null;
+	/** Attribute pastes copied from a website matching an author's identifier to that author */
+	recognizePasteSource: boolean;
 	/** Whether the "Self" author has been offered, so deleting it sticks */
 	selfSeeded: boolean;
 }
@@ -41,6 +43,7 @@ export const DEFAULT_SETTINGS: MarkdownAnnotationsSettings = {
 	warnOnHashMismatch: true,
 	authors: [],
 	defaultAuthorId: null,
+	recognizePasteSource: true,
 	selfSeeded: false,
 };
 
@@ -73,6 +76,7 @@ export function normalizeSettings(stored: unknown): MarkdownAnnotationsSettings 
 		warnOnHashMismatch: data.warnOnHashMismatch ?? DEFAULT_SETTINGS.warnOnHashMismatch,
 		authors,
 		defaultAuthorId: typeof data.defaultAuthorId === 'string' ? data.defaultAuthorId : null,
+		recognizePasteSource: data.recognizePasteSource ?? DEFAULT_SETTINGS.recognizePasteSource,
 		selfSeeded: true,
 	};
 	ensureDefaultAuthor(settings);

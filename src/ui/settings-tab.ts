@@ -28,9 +28,9 @@ const AUTHOR_TYPE_LABELS: Record<AuthorType, string> = {
 	[AuthorType.Reference]: 'Reference',
 };
 
-type ToggleKey = 'showVisualIndicators' | 'warnOnHashMismatch';
+type ToggleKey = 'showVisualIndicators' | 'warnOnHashMismatch' | 'recognizePasteSource';
 
-const TOGGLE_KEYS: readonly ToggleKey[] = ['showVisualIndicators', 'warnOnHashMismatch'];
+const TOGGLE_KEYS: readonly ToggleKey[] = ['showVisualIndicators', 'warnOnHashMismatch', 'recognizePasteSource'];
 
 const isToggleKey = (key: string): key is ToggleKey =>
 	(TOGGLE_KEYS as readonly string[]).includes(key);
@@ -80,7 +80,7 @@ export class MarkdownAnnotationsSettingTab extends PluginSettingTab {
 				items: [
 					{
 						name: 'Default author',
-						desc: 'Used by “Mark selection as default author”. Usually you.',
+						desc: 'Text you type is attributed to this author, and “Mark selection as default author” applies it. Usually you.',
 						aliases: ['self', 'me', 'my name', 'human'],
 						visible: () => this.plugin.settings.authors.length > 0,
 						control: {
@@ -89,6 +89,12 @@ export class MarkdownAnnotationsSettingTab extends PluginSettingTab {
 							options: Object.fromEntries(this.plugin.settings.authors.map(a =>
 								[a.id, `${AUTHOR_TYPE_LABELS[a.type]}: ${a.name}`])),
 						},
+					},
+					{
+						name: 'Recognize pasted text',
+						desc: 'When you paste text copied from a website that matches an author’s identifier, such as claude.ai, attribute it to that author. Desktop only.',
+						aliases: ['paste', 'source', 'detect', 'identifier', 'website', 'AI'],
+						control: { type: 'toggle', key: 'recognizePasteSource' },
 					},
 				],
 			},
@@ -241,7 +247,7 @@ export class AuthorEditModal extends Modal {
 
 		new Setting(contentEl)
 			.setName('Identifier')
-			.setDesc('Optional email, website, or other identifier')
+			.setDesc('Optional email, website, or other identifier. Text pasted from a matching website is attributed to this author.')
 			.addText(text => {
 				this.identifierInput = text
 					.setPlaceholder('e.g., email@example.com')
